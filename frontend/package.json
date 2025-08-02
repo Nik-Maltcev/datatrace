@@ -1,0 +1,52 @@
+{
+  "name": "privacy-data-removal-frontend",
+  "version": "1.0.0",
+  "description": "Frontend для сервиса удаления личной информации из телеграм ботов",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.1",
+    "axios": "^1.6.2",
+    "typescript": "^5.3.3",
+    "@types/react": "^18.2.42",
+    "@types/react-dom": "^18.2.17",
+    "react-hook-form": "^7.48.2",
+    "react-query": "^3.39.3",
+    "styled-components": "^6.1.6",
+    "@types/styled-components": "^5.1.34",
+    "react-icons": "^4.12.0",
+    "react-loading-skeleton": "^3.3.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "lint:fix": "eslint src/**/*.{ts,tsx} --fix"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "react-scripts": "5.0.1",
+    "@types/node": "^20.10.4",
+    "web-vitals": "^3.5.0"
+  }
+}

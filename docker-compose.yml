@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: privacy-backend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - LOG_LEVEL=debug
+      - FRONTEND_URL=http://localhost:3001
+      - MONITORING_ENABLED=true
+      - METRICS_INTERVAL=30000
+      - ALERTS_ENABLED=true
+      # API Keys (should be set in .env file)
+      - DYXLESS_API_KEY=${DYXLESS_API_KEY:-}
+      - ITP_API_KEY=${ITP_API_KEY:-}
+      - LEAK_OSINT_API_KEY=${LEAK_OSINT_API_KEY:-}
+      - USERBOX_API_KEY=${USERBOX_API_KEY:-}
+      - VEKTOR_API_KEY=${VEKTOR_API_KEY:-}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_logs:/app/logs
+    networks:
+      - privacy-network
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: npm run dev
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: privacy-frontend-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+      - REACT_APP_ENVIRONMENT=development
+      - GENERATE_SOURCEMAP=true
+      - FAST_REFRESH=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - privacy-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: npm start
+    stdin_open: true
+    tty: true
+
+volumes:
+  backend_logs:
+    driver: local
+
+networks:
+  privacy-network:
+    driver: bridge

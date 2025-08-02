@@ -1,0 +1,44 @@
+{
+  "bots": [
+    {
+      "id": "dyxless",
+      "name": "Dyxless",
+      "encryptedName": "Бот A",
+      "isActive": true,
+      "priority": 1,
+      "apiClient": "DyxlessClient"
+    },
+    {
+      "id": "itp",
+      "name": "InfoTrackPeople",
+      "encryptedName": "Бот B",
+      "isActive": true,
+      "priority": 2,
+      "apiClient": "ITPClient"
+    },
+    {
+      "id": "leak_osint",
+      "name": "LeakOsint",
+      "encryptedName": "Бот C",
+      "isActive": true,
+      "priority": 3,
+      "apiClient": "LeakOsintClient"
+    },
+    {
+      "id": "userbox",
+      "name": "Userbox",
+      "encryptedName": "Бот D",
+      "isActive": true,
+      "priority": 4,
+      "apiClient": "UserboxClient"
+    },
+    {
+      "id": "vektor",
+      "name": "Vektor",
+      "encryptedName": "Бот E",
+      "isActive": true,
+      "priority": 5,
+      "apiClient": "VektorClient"
+    }
+  ]
+}
