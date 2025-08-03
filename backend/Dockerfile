@@ -11,8 +11,23 @@ WORKDIR /app
 ENV NPM_CONFIG_LOGLEVEL=warn
 ENV NPM_CONFIG_PROGRESS=false
 
+# Debug: List files in build context root
+RUN echo "=== BUILD CONTEXT ROOT ===" && ls -la /
+
+# Debug: List files in current working directory
+RUN echo "=== CURRENT WORKING DIRECTORY ===" && pwd && ls -la
+
+# Debug: Check if backend directory exists in build context
+RUN echo "=== CHECKING BACKEND DIRECTORY ===" && ls -la backend/ || echo "Backend directory not found"
+
+# Debug: Check for package files in backend directory
+RUN echo "=== PACKAGE FILES IN BACKEND ===" && ls -la backend/package* || echo "Package files not found in backend/"
+
 # Copy package files
 COPY backend/package*.json ./
+
+# Debug: Verify copied files
+RUN echo "=== COPIED FILES ===" && ls -la package*
 
 # Install all dependencies (including devDependencies for build)
 RUN npm ci --prefer-offline --no-audit --no-fund && npm cache clean --force
