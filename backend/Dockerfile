@@ -12,13 +12,13 @@ ENV NPM_CONFIG_LOGLEVEL=warn
 ENV NPM_CONFIG_PROGRESS=false
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install all dependencies (including devDependencies for build)
 RUN npm ci --prefer-offline --no-audit --no-fund && npm cache clean --force
 
 # Copy source code
-COPY . .
+COPY backend/ .
 
 # Build the application
 RUN npm run build
@@ -34,7 +34,7 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install only production dependencies
 RUN npm ci --only=production --prefer-offline --no-audit --no-fund && npm cache clean --force
