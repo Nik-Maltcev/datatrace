@@ -122,7 +122,7 @@ router.post('/search/specific',
       const botIds: string[] = req.body.botIds || [];
 
       if (!Array.isArray(botIds) || botIds.length === 0) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: {
             message: 'botIds array is required and must not be empty',
@@ -130,6 +130,7 @@ router.post('/search/specific',
             type: 'VALIDATION_ERROR'
           }
         });
+        return;
       }
 
       logger.info('Specific bot search request received', {

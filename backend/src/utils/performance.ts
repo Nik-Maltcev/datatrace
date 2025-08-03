@@ -172,7 +172,9 @@ export class MemoryOptimizer {
     // If still full, remove oldest entries
     if (this.cache.size >= this.maxCacheSize) {
       const oldestKey = this.cache.keys().next().value;
-      this.cache.delete(oldestKey);
+      if (oldestKey) {
+        this.cache.delete(oldestKey);
+      }
     }
 
     this.cache.set(key, {

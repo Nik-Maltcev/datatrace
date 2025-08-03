@@ -72,7 +72,7 @@ router.get('/:planId', (req: Request, res: Response) => {
     });
 
     if (!planId || typeof planId !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'Plan ID is required',
@@ -80,6 +80,7 @@ router.get('/:planId', (req: Request, res: Response) => {
           type: 'VALIDATION_ERROR'
         }
       });
+      return;
     }
 
     const plan = tariffService.getTariffPlan(planId);
@@ -87,7 +88,7 @@ router.get('/:planId', (req: Request, res: Response) => {
     if (!plan) {
       logger.warn('Tariff plan not found', { planId });
       
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: {
           message: `Tariff plan not found: ${planId}`,
@@ -95,6 +96,7 @@ router.get('/:planId', (req: Request, res: Response) => {
           type: 'NOT_FOUND_ERROR'
         }
       });
+      return;
     }
 
     const paymentStatus = tariffService.getPaymentStatus();
@@ -188,7 +190,7 @@ router.post('/subscribe', (req: Request, res: Response) => {
     });
 
     if (!planId || !userId) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'Plan ID and User ID are required',
@@ -196,12 +198,13 @@ router.post('/subscribe', (req: Request, res: Response) => {
           type: 'VALIDATION_ERROR'
         }
       });
+      return;
     }
 
     const result = tariffService.createSubscription(userId, planId);
     
     if (!result.success) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: result.message || 'Failed to create subscription',
@@ -209,6 +212,7 @@ router.post('/subscribe', (req: Request, res: Response) => {
           type: 'SUBSCRIPTION_ERROR'
         }
       });
+      return;
     }
 
     res.status(200).json({
@@ -260,7 +264,7 @@ router.get('/user/:userId/subscription', (req: Request, res: Response) => {
     });
 
     if (!userId) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'User ID is required',
@@ -268,6 +272,7 @@ router.get('/user/:userId/subscription', (req: Request, res: Response) => {
           type: 'VALIDATION_ERROR'
         }
       });
+      return;
     }
 
     const subscription = tariffService.getUserSubscription(userId);

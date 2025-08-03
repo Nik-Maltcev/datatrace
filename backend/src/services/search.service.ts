@@ -335,12 +335,12 @@ export class SearchService {
       searchId: rawResults.searchId,
       timestamp: rawResults.timestamp,
       query: this.sanitizeQueryForLogging(originalRequest.value),
-      searchType: rawResults.searchType,
+      searchType: originalRequest.type,
       results: sortedResults,
       totalBotsSearched: rawResults.totalBotsSearched,
       totalBotsWithData: rawResults.totalBotsWithData,
-      totalRecords: rawResults.totalRecords,
-      searchDuration: rawResults.searchDuration,
+      totalRecords: sortedResults.reduce((sum, r) => sum + r.foundData.length, 0),
+      searchDuration: Date.now() - rawResults.timestamp.getTime(),
       encryptionEnabled: this.config.enableEncryption
     };
   }

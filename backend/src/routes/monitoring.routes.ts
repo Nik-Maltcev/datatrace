@@ -54,7 +54,7 @@ router.get('/status', (req, res) => {
     res.json({
       timestamp: new Date().toISOString(),
       status: healthStatus.status,
-      uptime: healthStatus.uptime,
+      uptime: process.uptime(),
       version: process.env.npm_package_version || '1.0.0',
       environment: process.env.NODE_ENV || 'development',
       metrics: recentMetrics,
@@ -188,10 +188,11 @@ router.put('/config', (req, res) => {
     const { config } = req.body;
 
     if (!config || typeof config !== 'object') {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Invalid configuration data',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     // Validate configuration
@@ -201,10 +202,11 @@ router.put('/config', (req, res) => {
 
     const invalidKeys = Object.keys(config).filter(key => !validKeys.includes(key));
     if (invalidKeys.length > 0) {
-      return res.status(400).json({
+      res.status(400).json({
         error: `Invalid configuration keys: ${invalidKeys.join(', ')}`,
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     // Update configuration
@@ -240,17 +242,19 @@ router.post('/metrics/custom', (req, res) => {
     const { name, value, unit, tags, threshold } = req.body;
 
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Metric name is required and must be a string',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     if (typeof value !== 'number') {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Metric value is required and must be a number',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const metric = {
@@ -329,7 +333,7 @@ router.get('/dashboard', (req, res) => {
     res.json({
       timestamp: new Date().toISOString(),
       status: healthStatus.status,
-      uptime: healthStatus.uptime,
+      uptime: process.uptime(),
       metrics: {
         system: recentSystemMetrics,
         application: recentAppMetrics,
@@ -343,9 +347,9 @@ router.get('/dashboard', (req, res) => {
         active: activeAlerts,
         summary: {
           total: activeAlerts.length,
-          critical: activeAlerts.filter(a => a.severity === 'critical' || a.severity === 'emergency').length,
-          warning: activeAlerts.filter(a => a.severity === 'warning').length,
-          info: activeAlerts.filter(a => a.severity === 'info').length
+          critical: activeAlerts.filter((a: any) => a.severity === 'critical' || a.severity === 'emergency').length,
+          warning: activeAlerts.filter((a: any) => a.severity === 'warning').length,
+          info: activeAlerts.filter((a: any) => a.severity === 'info').length
         }
       }
     });

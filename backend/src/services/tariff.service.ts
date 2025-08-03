@@ -298,7 +298,7 @@ export class TariffService {
   public getTariffComparison(): {
     plans: TariffPlan[];
     features: string[];
-    comparison: Record<string, Record<string, boolean | string>>;
+    comparison: Record<string, Record<string, boolean | string | number>>;
   } {
     const plans = this.getAllTariffPlans();
     

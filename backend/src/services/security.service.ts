@@ -70,7 +70,7 @@ export class SecurityService {
     try {
       const key = Buffer.from(this.config.encryptionKey, 'hex');
       const iv = crypto.randomBytes(this.config.ivLength);
-      const cipher = crypto.createCipher(this.config.algorithm, key);
+      const cipher = crypto.createCipherGCM(this.config.algorithm, key, iv);
       cipher.setAAD(Buffer.from('privacy-data-removal', 'utf8'));
 
       let encrypted = cipher.update(data, 'utf8', 'hex');
@@ -112,7 +112,7 @@ export class SecurityService {
       const iv = Buffer.from(encryptedData.iv, 'hex');
       const tag = Buffer.from(encryptedData.tag, 'hex');
       
-      const decipher = crypto.createDecipher(this.config.algorithm, key);
+      const decipher = crypto.createDecipherGCM(this.config.algorithm, key, iv);
       decipher.setAAD(Buffer.from('privacy-data-removal', 'utf8'));
       decipher.setAuthTag(tag);
 
