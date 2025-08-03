@@ -1,0 +1,77 @@
+# Backend Dockerfile for Privacy Data Removal Service
+# Fixed version with explicit file copying and fallback strategy
+
+# Build stage
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Set npm configuration for better performance and lower memory usage
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_PROGRESS=false
+
+# Copy package files explicitly (handle missing package-lock.json gracefully)
+COPY backend/package.json ./package.json
+
+# Try to copy package-lock.json, but don't fail if it doesn't exist
+RUN if [ -f ../backend/package-lock.json ]; then \
+      cp ../backend/package-lock.json ./package-lock.json; \
+    else \
+      echo "No package-lock.json found, will use npm install"; \
+    fi
+
+# Install dependencies with fallback strategy
+RUN if [ -f package-lock.json ]; then \
+      echo "Installing with npm ci" && \
+      npm ci --prefer-offline --no-audit --no-fund; \
+    else \
+      echo "Installing with npm install" && \
+      npm install --prefer-offline --no-audit --no-fund; \
+    fi && npm cache clean --force
+
+# Copy source code
+COPY backend/src ./src
+COPY backend/tsconfig.build.json ./tsconfig.build.json
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine AS production
+
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json for production
+COPY backend/package.json ./package.json
+
+# Install only production dependencies
+RUN npm install --only=production --prefer-offline --no-audit --no-fund && npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+
+# Create logs directory
+RUN mkdir -p logs && chown -R nodejs:nodejs logs
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Switch to non-root user
+USER nodejs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+# Start the application
+CMD ["node", "dist/index.js"]

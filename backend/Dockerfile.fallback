@@ -1,0 +1,77 @@
+# Fallback Dockerfile with npm install instead of npm ci
+# This version handles missing package-lock.json gracefully
+
+# Build stage
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Set npm configuration for better performance and lower memory usage
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_PROGRESS=false
+
+# Copy package files (try to copy package-lock.json but don't fail if missing)
+COPY backend/package.json ./
+COPY backend/package-lock.json ./ || true
+
+# Install dependencies with fallback strategy
+RUN if [ -f package-lock.json ]; then \
+      echo "Using npm ci with package-lock.json" && \
+      npm ci --prefer-offline --no-audit --no-fund; \
+    else \
+      echo "No package-lock.json found, using npm install" && \
+      npm install --prefer-offline --no-audit --no-fund; \
+    fi && npm cache clean --force
+
+# Copy source code
+COPY backend/ .
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM node:18-alpine AS production
+
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY backend/package.json ./
+COPY backend/package-lock.json ./ || true
+
+# Install only production dependencies with fallback
+RUN if [ -f package-lock.json ]; then \
+      echo "Using npm ci for production dependencies" && \
+      npm ci --only=production --prefer-offline --no-audit --no-fund; \
+    else \
+      echo "Using npm install for production dependencies" && \
+      npm install --only=production --prefer-offline --no-audit --no-fund; \
+    fi && npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+
+# Create logs directory
+RUN mkdir -p logs && chown -R nodejs:nodejs logs
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Switch to non-root user
+USER nodejs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+# Start the application
+CMD ["node", "dist/index.js"]

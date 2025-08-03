@@ -1,0 +1,90 @@
+# Debug Dockerfile for Railway deployment troubleshooting
+# This version includes debugging commands to inspect file system state
+
+# Build stage
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Debug: List files in build context root
+RUN echo "=== BUILD CONTEXT ROOT ===" && ls -la /
+
+# Debug: List files in current working directory
+RUN echo "=== CURRENT WORKING DIRECTORY ===" && pwd && ls -la
+
+# Debug: Check if backend directory exists in build context
+RUN echo "=== CHECKING BACKEND DIRECTORY ===" && ls -la backend/ || echo "Backend directory not found"
+
+# Debug: Check for package files in backend directory
+RUN echo "=== PACKAGE FILES IN BACKEND ===" && ls -la backend/package* || echo "Package files not found in backend/"
+
+# Set npm configuration for better performance and lower memory usage
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_PROGRESS=false
+
+# Copy package files
+COPY backend/package*.json ./
+
+# Debug: Verify copied files
+RUN echo "=== COPIED FILES ===" && ls -la package*
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci --prefer-offline --no-audit --no-fund && npm cache clean --force
+
+# Copy source code
+COPY backend/ .
+
+# Debug: Verify source code copied
+RUN echo "=== SOURCE CODE FILES ===" && ls -la src/
+
+# Build the application
+RUN npm run build
+
+# Debug: Verify build output
+RUN echo "=== BUILD OUTPUT ===" && ls -la dist/
+
+# Production stage
+FROM node:18-alpine AS production
+
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY backend/package*.json ./
+
+# Debug: Verify package files in production stage
+RUN echo "=== PRODUCTION PACKAGE FILES ===" && ls -la package*
+
+# Install only production dependencies
+RUN npm ci --only=production --prefer-offline --no-audit --no-fund && npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+
+# Debug: Verify final application structure
+RUN echo "=== FINAL APPLICATION STRUCTURE ===" && ls -la && ls -la dist/
+
+# Create logs directory
+RUN mkdir -p logs && chown -R nodejs:nodejs logs
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Switch to non-root user
+USER nodejs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+# Start the application
+CMD ["node", "dist/index.js"]
