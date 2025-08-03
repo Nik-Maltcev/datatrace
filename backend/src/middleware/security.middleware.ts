@@ -57,7 +57,7 @@ export const securityMiddleware = (config: Partial<SecurityConfig> = {}) => {
             userAgent: req.get('User-Agent')
           });
           
-          return res.status(403).json({
+          res.status(403).json({
             success: false,
             error: {
               message: 'Request blocked for security reasons',
@@ -86,7 +86,7 @@ export const securityMiddleware = (config: Partial<SecurityConfig> = {}) => {
             resetTime: new Date(rateLimitResult.resetTime).toISOString()
           });
 
-          return res.status(429).json({
+          res.status(429).json({
             success: false,
             error: {
               message: 'Rate limit exceeded',
@@ -363,7 +363,7 @@ export const emergencyLockdownMiddleware = (
       method: req.method
     });
     
-    return res.status(503).json({
+    res.status(503).json({
       success: false,
       error: {
         message: 'Service temporarily unavailable due to security maintenance',

@@ -29,7 +29,7 @@ export class SecurityService {
   private constructor() {
     this.config = {
       encryptionKey: process.env.ENCRYPTION_KEY || this.generateEncryptionKey(),
-      algorithm: 'aes-256-gcm',
+      algorithm: 'aes-256-cbc',
       keyLength: 32,
       ivLength: 16,
       tagLength: 16
@@ -68,20 +68,17 @@ export class SecurityService {
    */
   public encryptSensitiveData(data: string): EncryptedData {
     try {
-      const key = Buffer.from(this.config.encryptionKey, 'hex');
+      const key = crypto.scryptSync(this.config.encryptionKey, 'salt', 32);
       const iv = crypto.randomBytes(this.config.ivLength);
-      const cipher = crypto.createCipherGCM(this.config.algorithm, key, iv);
-      cipher.setAAD(Buffer.from('privacy-data-removal', 'utf8'));
+      const cipher = crypto.createCipheriv(this.config.algorithm, key, iv);
 
       let encrypted = cipher.update(data, 'utf8', 'hex');
       encrypted += cipher.final('hex');
-      
-      const tag = cipher.getAuthTag();
 
       const result: EncryptedData = {
         encryptedValue: encrypted,
         iv: iv.toString('hex'),
-        tag: tag.toString('hex')
+        tag: ''
       };
 
       // Register for cleanup
@@ -108,13 +105,10 @@ export class SecurityService {
    */
   public decryptSensitiveData(encryptedData: EncryptedData): string {
     try {
-      const key = Buffer.from(this.config.encryptionKey, 'hex');
+      const key = crypto.scryptSync(this.config.encryptionKey, 'salt', 32);
       const iv = Buffer.from(encryptedData.iv, 'hex');
-      const tag = Buffer.from(encryptedData.tag, 'hex');
       
-      const decipher = crypto.createDecipherGCM(this.config.algorithm, key, iv);
-      decipher.setAAD(Buffer.from('privacy-data-removal', 'utf8'));
-      decipher.setAuthTag(tag);
+      const decipher = crypto.createDecipheriv(this.config.algorithm, key, iv);
 
       let decrypted = decipher.update(encryptedData.encryptedValue, 'hex', 'utf8');
       decrypted += decipher.final('utf8');

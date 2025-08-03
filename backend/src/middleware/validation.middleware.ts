@@ -70,7 +70,7 @@ const validatePassport = (value: string): boolean => {
 /**
  * Middleware to validate search requests
  */
-export const validateSearchRequest = (req: Request, res: Response, next: NextFunction) => {
+export const validateSearchRequest = (req: Request, res: Response, next: NextFunction): void => {
   try {
     // First, validate the basic structure
     const { error, value } = searchRequestSchema.validate(req.body, {
@@ -91,7 +91,7 @@ export const validateSearchRequest = (req: Request, res: Response, next: NextFun
         ip: req.ip
       });
 
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'Validation failed',
@@ -100,6 +100,7 @@ export const validateSearchRequest = (req: Request, res: Response, next: NextFun
           details: validationErrors
         }
       });
+      return;
     }
 
     // Now validate the specific format based on type
@@ -138,7 +139,7 @@ export const validateSearchRequest = (req: Request, res: Response, next: NextFun
         ip: req.ip
       });
 
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: formatError,
@@ -147,6 +148,7 @@ export const validateSearchRequest = (req: Request, res: Response, next: NextFun
           searchType: type
         }
       });
+      return;
     }
 
     // If validation passes, attach the validated data to request
@@ -177,7 +179,7 @@ export const validateSearchRequest = (req: Request, res: Response, next: NextFun
  * Generic validation middleware factory
  */
 export const validateRequest = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
       stripUnknown: true
@@ -195,7 +197,7 @@ export const validateRequest = (schema: Joi.ObjectSchema) => {
         ip: req.ip
       });
 
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'Validation failed',
@@ -204,6 +206,7 @@ export const validateRequest = (schema: Joi.ObjectSchema) => {
           details: validationErrors
         }
       });
+      return;
     }
 
     req.body = value;
@@ -215,7 +218,7 @@ export const validateRequest = (schema: Joi.ObjectSchema) => {
  * Validate query parameters
  */
 export const validateQuery = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const { error, value } = schema.validate(req.query, {
       abortEarly: false,
       stripUnknown: true
@@ -228,7 +231,7 @@ export const validateQuery = (schema: Joi.ObjectSchema) => {
         value: detail.context?.value
       }));
 
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'Query validation failed',
@@ -237,6 +240,7 @@ export const validateQuery = (schema: Joi.ObjectSchema) => {
           details: validationErrors
         }
       });
+      return;
     }
 
     req.query = value;
@@ -248,7 +252,7 @@ export const validateQuery = (schema: Joi.ObjectSchema) => {
  * Validate URL parameters
  */
 export const validateParams = (schema: Joi.ObjectSchema) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const { error, value } = schema.validate(req.params, {
       abortEarly: false,
       stripUnknown: true
@@ -261,7 +265,7 @@ export const validateParams = (schema: Joi.ObjectSchema) => {
         value: detail.context?.value
       }));
 
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'Parameter validation failed',
@@ -270,6 +274,7 @@ export const validateParams = (schema: Joi.ObjectSchema) => {
           details: validationErrors
         }
       });
+      return;
     }
 
     req.params = value;

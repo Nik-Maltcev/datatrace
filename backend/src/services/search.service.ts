@@ -3,8 +3,8 @@
  * Coordinates search operations across all bot APIs and aggregates results
  */
 
-import { SearchRequest, SearchResult, SearchResults, SearchType, FoundDataItem } from '../types/search';
-import { ApiManagerService, BotSearchResult } from './api-manager.service';
+import { SearchRequest, SearchResult, SearchResults, SearchType, FoundDataItem, SearchStatus } from '../types/search';
+import { ApiManagerService, BotSearchResult, BotSearchResults } from './api-manager.service';
 import { ErrorRecoveryService } from './error-recovery.service';
 import { logger } from '../utils/logger';
 import { notificationService } from './notification.service';
@@ -316,7 +316,7 @@ export class SearchService {
    * Aggregate and transform raw API results into user-friendly format
    */
   private aggregateResults(
-    rawResults: SearchResults, 
+    rawResults: BotSearchResults, 
     originalRequest: SearchRequest
   ): AggregatedSearchResults {
     const transformedResults: SearchResult[] = rawResults.results.map(botResult => 
@@ -362,9 +362,29 @@ export class SearchService {
       botName: botResult.encryptedName,
       foundData,
       hasData: botResult.hasData,
-      status: botResult.status as any, // Type conversion from BotSearchResult status
+      status: this.convertBotStatusToSearchStatus(botResult.status),
       errorMessage: botResult.errorMessage
     };
+  }
+
+  /**
+   * Convert bot status to SearchStatus enum
+   */
+  private convertBotStatusToSearchStatus(botStatus: string): SearchStatus {
+    switch (botStatus) {
+      case 'success':
+        return SearchStatus.SUCCESS;
+      case 'error':
+        return SearchStatus.ERROR;
+      case 'no_data':
+        return SearchStatus.NO_DATA;
+      case 'timeout':
+        return SearchStatus.TIMEOUT;
+      case 'circuit_open':
+        return SearchStatus.ERROR;
+      default:
+        return SearchStatus.ERROR;
+    }
   }
 
   /**
@@ -409,8 +429,8 @@ export class SearchService {
       if (!a.hasData && b.hasData) return 1;
 
       // Second priority: successful status
-      if (a.status === 'success' && b.status !== 'success') return -1;
-      if (a.status !== 'success' && b.status === 'success') return 1;
+      if (a.status === SearchStatus.SUCCESS && b.status !== SearchStatus.SUCCESS) return -1;
+      if (a.status !== SearchStatus.SUCCESS && b.status === SearchStatus.SUCCESS) return 1;
 
       // Third priority: number of found records
       const aRecords = a.foundData.length;

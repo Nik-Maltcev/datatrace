@@ -13,7 +13,7 @@ const router = Router();
  * GET /api/instructions/:botId
  * Get removal instructions for a specific bot
  */
-router.get('/:botId', (req: Request, res: Response) => {
+router.get('/:botId', (req: Request, res: Response): void => {
   try {
     const { botId } = req.params;
     
@@ -25,7 +25,7 @@ router.get('/:botId', (req: Request, res: Response) => {
 
     // Validate botId
     if (!botId || typeof botId !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           message: 'Bot ID is required',
@@ -41,7 +41,7 @@ router.get('/:botId', (req: Request, res: Response) => {
     if (!generatedInstructions) {
       logger.warn('Instructions not found for bot', { botId });
       
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: {
           message: `Instructions not found for bot: ${botId}`,
@@ -52,6 +52,19 @@ router.get('/:botId', (req: Request, res: Response) => {
     }
 
     // Return instructions with encrypted bot name
+    if (!generatedInstructions) {
+      res.status(404).json({
+        success: false,
+        error: {
+          message: 'Instructions not found for this bot',
+          code: 404,
+          type: 'NOT_FOUND_ERROR',
+          botId
+        }
+      });
+      return;
+    }
+
     const response = {
       botId: generatedInstructions.botId,
       botName: generatedInstructions.encryptedName, // Use encrypted name for privacy

@@ -31,18 +31,6 @@ export interface ApiManagerConfig {
   circuitBreakerTimeout: number;
 }
 
-export interface SearchResults {
-  searchId: string;
-  timestamp: Date;
-  query: string;
-  searchType: SearchType;
-  results: BotSearchResult[];
-  totalBotsSearched: number;
-  totalBotsWithData: number;
-  totalRecords: number;
-  searchDuration: number;
-}
-
 export interface BotSearchResult {
   botId: string;
   encryptedName: string;
@@ -53,6 +41,18 @@ export interface BotSearchResult {
   responseTime: number;
   errorMessage?: string;
   rawResponse?: any;
+}
+
+export interface BotSearchResults {
+  searchId: string;
+  timestamp: Date;
+  query: string;
+  searchType: SearchType;
+  results: BotSearchResult[];
+  totalBotsSearched: number;
+  totalBotsWithData: number;
+  totalRecords: number;
+  searchDuration: number;
 }
 
 export interface CircuitBreakerState {
@@ -191,7 +191,7 @@ export class ApiManagerService {
   /**
    * Search across all active bot APIs in parallel
    */
-  async searchAll(request: SearchRequest): Promise<SearchResults> {
+  async searchAll(request: SearchRequest): Promise<BotSearchResults> {
     const searchId = this.generateSearchId();
     const startTime = Date.now();
 
@@ -537,7 +537,7 @@ export class ApiManagerService {
   async searchWithBots(
     request: SearchRequest, 
     botIds: string[]
-  ): Promise<SearchResults> {
+  ): Promise<BotSearchResults> {
     const searchId = this.generateSearchId();
     const startTime = Date.now();
 

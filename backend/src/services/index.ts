@@ -15,7 +15,7 @@ export { TariffService, tariffService } from './tariff.service';
 export type { 
   ApiManagerConfig,
   BotConfig,
-  SearchResults,
+  BotSearchResults,
   BotSearchResult,
   CircuitBreakerState
 } from './api-manager.service';

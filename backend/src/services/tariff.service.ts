@@ -320,7 +320,7 @@ export class TariffService {
       });
       
       // Add special fields
-      comparison[plan.id]['price'] = plan.price;
+      comparison[plan.id]['price'] = String(plan.price);
       comparison[plan.id]['searchLimit'] = plan.searchLimit === -1 ? 'Неограничено' : plan.searchLimit.toString();
     });
 
