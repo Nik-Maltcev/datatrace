@@ -7,11 +7,15 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
+# Set npm configuration for better performance and lower memory usage
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_PROGRESS=false
+
 # Copy package files
 COPY package*.json ./
 
 # Install all dependencies (including devDependencies for build)
-RUN npm ci && npm cache clean --force
+RUN npm ci --prefer-offline --no-audit --no-fund && npm cache clean --force
 
 # Copy source code
 COPY . .
@@ -33,7 +37,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --only=production --prefer-offline --no-audit --no-fund && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
