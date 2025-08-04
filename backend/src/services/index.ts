@@ -7,7 +7,7 @@ export { ValidationService } from './validation.service';
 export { ApiManagerService } from './api-manager.service';
 export { SearchService } from './search.service';
 export { InstructionGenerator, instructionGenerator } from './instruction-generator.service';
-export { SecurityService, securityService } from './security.service';
+export { SecurityService, getSecurityService } from './security.service';
 export { AdvancedRateLimitService, advancedRateLimitService } from './advanced-rate-limit.service';
 export { TariffService, tariffService } from './tariff.service';
 

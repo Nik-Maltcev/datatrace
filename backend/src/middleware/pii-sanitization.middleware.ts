@@ -212,7 +212,7 @@ function encryptSensitiveRequestData(obj: any): void {
         try {
           // Store original value temporarily and encrypt
           const originalValue = obj[key];
-          const encrypted = securityService.encryptSensitiveData(originalValue);
+          const encrypted = getSecurityService().encryptSensitiveData(originalValue);
           
           // Store both encrypted and original for processing
           obj[`${key}_encrypted`] = encrypted;
