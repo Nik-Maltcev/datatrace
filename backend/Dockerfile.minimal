@@ -1,0 +1,34 @@
+# Minimal Dockerfile for debugging Railway deployment
+# Absolutely minimal setup to test basic functionality
+
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json
+COPY backend/package.json ./
+
+# Install dependencies
+RUN npm install --only=production --no-audit --no-fund
+
+# Copy minimal source
+COPY backend/src/index.minimal.ts ./src/
+COPY backend/tsconfig.json ./
+COPY backend/tsconfig.build.json ./
+
+# Install TypeScript for building
+RUN npm install typescript --no-save
+
+# Build the minimal application
+RUN npx tsc src/index.minimal.ts --outDir dist --target ES2020 --module commonjs --esModuleInterop --skipLibCheck
+
+# Set environment
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Start the minimal application
+CMD ["node", "dist/index.minimal.js"]
