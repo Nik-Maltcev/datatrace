@@ -10,25 +10,53 @@ WORKDIR /app
 # Set npm configuration for better performance and lower memory usage
 ENV NPM_CONFIG_LOGLEVEL=warn
 ENV NPM_CONFIG_PROGRESS=false
+ENV NPM_CONFIG_FUND=false
+ENV NPM_CONFIG_AUDIT=false
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+ENV NPM_CONFIG_CACHE=/tmp/.npm
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 
-# Copy package files explicitly (handle missing package-lock.json gracefully)
+# Copy package.json first
 COPY backend/package.json ./package.json
 
-# Try to copy package-lock.json, but don't fail if it doesn't exist
-RUN if [ -f ../backend/package-lock.json ]; then \
-      cp ../backend/package-lock.json ./package-lock.json; \
-    else \
-      echo "No package-lock.json found, will use npm install"; \
-    fi
+# Create a script to handle package-lock.json copying
+RUN echo '#!/bin/sh' > /tmp/copy-lockfile.sh && \
+    echo 'if [ -f /build-context/backend/package-lock.json ]; then' >> /tmp/copy-lockfile.sh && \
+    echo '  cp /build-context/backend/package-lock.json /app/package-lock.json' >> /tmp/copy-lockfile.sh && \
+    echo '  echo "package-lock.json copied successfully"' >> /tmp/copy-lockfile.sh && \
+    echo 'else' >> /tmp/copy-lockfile.sh && \
+    echo '  echo "No package-lock.json found, will use npm install"' >> /tmp/copy-lockfile.sh && \
+    echo '  touch /app/no-lockfile.txt' >> /tmp/copy-lockfile.sh && \
+    echo 'fi' >> /tmp/copy-lockfile.sh && \
+    chmod +x /tmp/copy-lockfile.sh
 
-# Install dependencies with fallback strategy
-RUN if [ -f package-lock.json ]; then \
-      echo "Installing with npm ci" && \
-      npm ci --prefer-offline --no-audit --no-fund; \
+# Copy the entire backend directory temporarily to check for package-lock.json
+COPY backend/ /tmp/backend-check/
+
+# Copy package-lock.json if it exists
+RUN if [ -f /tmp/backend-check/package-lock.json ]; then \
+      cp /tmp/backend-check/package-lock.json ./package-lock.json && \
+      echo "package-lock.json found and copied"; \
     else \
-      echo "Installing with npm install" && \
+      echo "No package-lock.json found, will use npm install" && \
+      touch ./no-lockfile.txt; \
+    fi && \
+    rm -rf /tmp/backend-check
+
+# Install dependencies with comprehensive fallback strategy
+RUN echo "Starting dependency installation..." && \
+    if [ -f package-lock.json ]; then \
+      echo "Found package-lock.json, attempting npm ci..." && \
+      (npm ci --prefer-offline --no-audit --no-fund || \
+       (echo "npm ci failed, falling back to npm install..." && \
+        rm -f package-lock.json && \
+        npm install --prefer-offline --no-audit --no-fund)); \
+    else \
+      echo "No package-lock.json found, using npm install..." && \
       npm install --prefer-offline --no-audit --no-fund; \
-    fi && npm cache clean --force
+    fi && \
+    echo "Dependencies installed successfully" && \
+    npm cache clean --force
 
 # Copy source code
 COPY backend/src ./src
@@ -47,10 +75,19 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
+# Set npm configuration for production stage
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_PROGRESS=false
+ENV NPM_CONFIG_FUND=false
+ENV NPM_CONFIG_AUDIT=false
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+ENV NPM_CONFIG_CACHE=/tmp/.npm
+ENV NODE_OPTIONS="--max-old-space-size=512"
+
 # Copy package.json for production
 COPY backend/package.json ./package.json
 
-# Install only production dependencies
+# Install only production dependencies with memory optimization
 RUN npm install --only=production --prefer-offline --no-audit --no-fund && npm cache clean --force
 
 # Copy built application from builder stage
