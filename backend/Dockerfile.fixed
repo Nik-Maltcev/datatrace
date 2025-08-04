@@ -58,8 +58,9 @@ RUN echo "Starting dependency installation..." && \
     echo "Dependencies installed successfully" && \
     npm cache clean --force
 
-# Copy source code
+# Copy source code and TypeScript configuration
 COPY backend/src ./src
+COPY backend/tsconfig.json ./tsconfig.json
 COPY backend/tsconfig.build.json ./tsconfig.build.json
 
 # Build the application

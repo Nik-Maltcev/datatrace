@@ -17,9 +17,10 @@ COPY backend/package.json ./
 # Use npm install instead of npm ci to avoid lock file issues
 RUN npm install --prefer-offline --no-audit --no-fund && npm cache clean --force
 
-# Copy source code
+# Copy source code and TypeScript configuration
 COPY backend/src ./src
-COPY backend/tsconfig.build.json ./
+COPY backend/tsconfig.json ./tsconfig.json
+COPY backend/tsconfig.build.json ./tsconfig.build.json
 
 # Build the application
 RUN npm run build
