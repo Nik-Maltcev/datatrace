@@ -63,6 +63,9 @@ COPY backend/src ./src
 COPY backend/tsconfig.json ./tsconfig.json
 COPY backend/tsconfig.build.json ./tsconfig.build.json
 
+# Debug: Verify TypeScript configuration files
+RUN echo "=== TYPESCRIPT CONFIG FILES ===" && ls -la tsconfig* && echo "=== TSCONFIG.BUILD.JSON CONTENT ===" && cat tsconfig.build.json
+
 # Build the application
 RUN npm run build
 
