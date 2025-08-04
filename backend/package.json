@@ -5,7 +5,9 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
+    "start:simple": "node dist/index.simple.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev:simple": "ts-node-dev --respawn --transpile-only src/index.simple.ts",
     "build": "tsc --project tsconfig.build.json",
     "test": "jest",
     "test:watch": "jest --watch",

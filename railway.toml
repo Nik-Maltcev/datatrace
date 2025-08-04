@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "backend/Dockerfile.fixed"
+dockerfilePath = "backend/Dockerfile.simple"
 buildCommand = "npm run build"
 
 [deploy]
