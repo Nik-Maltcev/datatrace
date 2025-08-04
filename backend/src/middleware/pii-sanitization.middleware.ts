@@ -5,7 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
-import { securityService } from '../services/security.service';
+import { getSecurityService } from '../services/security.service';
 
 export interface SanitizedRequest extends Request {
   sanitizedBody?: any;
@@ -28,15 +28,15 @@ export const piiSanitizationMiddleware = (
     const originalParams = req.params;
 
     // Create sanitized versions for logging
-    req.sanitizedBody = securityService.sanitizeForLogging(originalBody);
-    req.sanitizedQuery = securityService.sanitizeForLogging(originalQuery);
-    req.sanitizedParams = securityService.sanitizeForLogging(originalParams);
+    req.sanitizedBody = getSecurityService().sanitizeForLogging(originalBody);
+    req.sanitizedQuery = getSecurityService().sanitizeForLogging(originalQuery);
+    req.sanitizedParams = getSecurityService().sanitizeForLogging(originalParams);
 
     // Override the default JSON response to sanitize sensitive data
     const originalJson = res.json;
     res.json = function(body: any) {
       // Log the sanitized response
-      const sanitizedResponse = securityService.sanitizeForLogging(body);
+      const sanitizedResponse = getSecurityService().sanitizeForLogging(body);
       
       logger.info('API Response', {
         method: req.method,

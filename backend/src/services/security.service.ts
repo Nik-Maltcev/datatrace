@@ -27,13 +27,17 @@ export class SecurityService {
   private sensitiveDataRegistry: Map<string, any>;
 
   private constructor() {
+    // Initialize config with default values first
     this.config = {
-      encryptionKey: process.env.ENCRYPTION_KEY || this.generateEncryptionKey(),
+      encryptionKey: '', // Will be set below
       algorithm: 'aes-256-cbc',
       keyLength: 32,
       ivLength: 16,
       tagLength: 16
     };
+    
+    // Now set the encryption key after config is initialized
+    this.config.encryptionKey = process.env.ENCRYPTION_KEY || this.generateEncryptionKey();
     this.memoryCleanupTasks = new Set();
     this.sensitiveDataRegistry = new Map();
     
@@ -358,5 +362,5 @@ export class SecurityService {
   }
 }
 
-// Export singleton instance
-export const securityService = SecurityService.getInstance();
+// Export singleton instance getter (lazy initialization)
+export const getSecurityService = () => SecurityService.getInstance();

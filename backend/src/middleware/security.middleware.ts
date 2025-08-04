@@ -6,7 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
-import { securityService } from '../services/security.service';
+import { getSecurityService } from '../services/security.service';
 import { advancedRateLimitService } from '../services/advanced-rate-limit.service';
 import {
   piiSanitizationMiddleware,
@@ -330,7 +330,7 @@ export const securityMonitoringMiddleware = (
 
     // Check for potential data leaks in response
     if (chunk && typeof chunk === 'string') {
-      const sanitizedChunk = securityService.sanitizeForLogging(chunk);
+      const sanitizedChunk = getSecurityService().sanitizeForLogging(chunk);
       if (sanitizedChunk !== chunk) {
         logger.warn('Potential PII in response detected and sanitized', {
           path: req.path,

@@ -2,7 +2,7 @@
  * Unit tests for Security Service
  */
 
-import { SecurityService, securityService } from '../security.service';
+import { SecurityService, getSecurityService } from '../security.service';
 
 describe('SecurityService', () => {
   let service: SecurityService;
@@ -25,7 +25,7 @@ describe('SecurityService', () => {
 
     it('should return the same instance as the exported singleton', () => {
       const instance = SecurityService.getInstance();
-      expect(instance).toBe(securityService);
+      expect(instance).toBe(getSecurityService());
     });
   });
 
