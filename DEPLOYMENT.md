@@ -1,574 +1,286 @@
-# Privacy Data Removal Service - Deployment Guide
+# DataTrace Deployment Guide
 
-This guide provides comprehensive instructions for deploying the Privacy Data Removal Service in various environments.
+This guide provides comprehensive instructions for deploying the DataTrace application to Railway and other platforms.
 
-## Table of Contents
+## Quick Start
 
-- [Prerequisites](#prerequisites)
-- [Environment Setup](#environment-setup)
-- [Development Deployment](#development-deployment)
-- [Production Deployment](#production-deployment)
-- [Docker Configuration](#docker-configuration)
-- [Environment Variables](#environment-variables)
-- [Monitoring and Health Checks](#monitoring-and-health-checks)
-- [Troubleshooting](#troubleshooting)
-- [Maintenance](#maintenance)
-
-## Prerequisites
-
-### System Requirements
-
-- **Operating System**: Linux, macOS, or Windows 10/11
-- **Docker**: Version 20.10 or higher
-- **Docker Compose**: Version 2.0 or higher
-- **Memory**: Minimum 4GB RAM (8GB recommended for production)
-- **Storage**: Minimum 10GB free space (20GB recommended for production)
-- **Network**: Internet connection for API calls and image downloads
-
-### Required Software
-
-1. **Docker & Docker Compose**
-   ```bash
-   # Linux (Ubuntu/Debian)
-   sudo apt-get update
-   sudo apt-get install docker.io docker-compose
-   
-   # macOS (using Homebrew)
-   brew install docker docker-compose
-   
-   # Windows
-   # Download Docker Desktop from https://www.docker.com/products/docker-desktop
-   ```
-
-2. **Node.js** (for local development)
-   ```bash
-   # Install Node.js 18 or higher
-   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-   sudo apt-get install -y nodejs
-   ```
-
-3. **Git**
-   ```bash
-   # Linux
-   sudo apt-get install git
-   
-   # macOS
-   brew install git
-   
-   # Windows
-   # Download from https://git-scm.com/download/win
-   ```
-
-## Environment Setup
-
-### 1. Clone the Repository
+### Option 1: Automated Deployment Script
 
 ```bash
-git clone <repository-url>
-cd privacy-data-removal-service
+# For Linux/macOS
+./scripts/deploy.sh docker
+
+# For Windows
+scripts\deploy.bat docker
 ```
 
-### 2. Configure Environment Variables
+### Option 2: Manual Railway Configuration
 
-#### Development Environment
+1. Update `railway.toml` with your preferred strategy
+2. Commit and push changes
+3. Monitor deployment on Railway dashboard
 
-```bash
-# Copy example environment files
-cp backend/.env.example backend/.env
-cp backend/.env.production.example backend/.env.production
+## Deployment Strategies
 
-# Edit the environment files with your API keys
-nano backend/.env
+### 1. Docker Strategy (Recommended)
+
+Uses `Dockerfile.fixed` with comprehensive optimizations and fallback strategies.
+
+**Configuration:**
+```toml
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile.fixed"
+buildCommand = "npm run build"
 ```
 
-#### Production Environment
+**Features:**
+- ✅ npm ci with fallback to npm install
+- ✅ Memory-optimized build process
+- ✅ Comprehensive error handling
+- ✅ Multi-stage build optimization
 
-```bash
-# Create production environment file
-cp backend/.env.production.example backend/.env.production
+**Use when:** You want maximum reliability and optimization
 
-# Configure production settings
-nano backend/.env.production
+### 2. Simple Docker Strategy
+
+Uses `Dockerfile.simple` that avoids npm ci entirely.
+
+**Configuration:**
+```toml
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "backend/Dockerfile.simple"
+buildCommand = "npm run build"
 ```
 
-**Important**: Make sure to set all required API keys:
-- `DYXLESS_API_KEY`
-- `ITP_API_KEY`
-- `LEAK_OSINT_API_KEY`
-- `USERBOX_API_KEY`
-- `VEKTOR_API_KEY`
+**Features:**
+- ✅ Uses npm install throughout
+- ✅ Avoids package-lock.json issues
+- ✅ Maximum compatibility
+- ✅ Simplified build process
 
-### 3. Verify Configuration
+**Use when:** Docker builds are failing with npm ci issues
 
-```bash
-# Check Docker installation
-docker --version
-docker-compose --version
+### 3. Buildpack Strategy
 
-# Verify environment files exist
-ls -la backend/.env*
+Uses Railway's Node.js buildpack for automatic dependency detection.
+
+**Configuration:**
+```toml
+[build]
+builder = "NIXPACKS"
 ```
 
-## Development Deployment
+**Features:**
+- ✅ Automatic dependency detection
+- ✅ No Dockerfile required
+- ✅ Railway-optimized build process
+- ✅ Simplified configuration
 
-### Quick Start
-
-```bash
-# Start development environment
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-```
-
-### Step-by-Step Development Setup
-
-1. **Build and Start Services**
-   ```bash
-   # Build images
-   docker-compose build
-   
-   # Start services in detached mode
-   docker-compose up -d
-   
-   # Check service status
-   docker-compose ps
-   ```
-
-2. **Verify Services**
-   ```bash
-   # Check backend health
-   curl http://localhost:3000/health
-   
-   # Check frontend
-   curl http://localhost:3001
-   
-   # View monitoring dashboard
-   open http://localhost:3000/api/monitoring/dashboard
-   ```
-
-3. **Development Workflow**
-   ```bash
-   # View real-time logs
-   docker-compose logs -f backend
-   docker-compose logs -f frontend
-   
-   # Restart specific service
-   docker-compose restart backend
-   
-   # Rebuild after code changes
-   docker-compose build backend
-   docker-compose up -d backend
-   ```
-
-## Production Deployment
-
-### Automated Deployment (Recommended)
-
-#### Linux/macOS
-
-```bash
-# Make deployment script executable
-chmod +x scripts/deploy.sh
-
-# Deploy to production
-./scripts/deploy.sh
-
-# Deploy with options
-./scripts/deploy.sh --environment production --force-rebuild
-
-# Dry run to see what would be deployed
-./scripts/deploy.sh --dry-run
-```
-
-#### Windows
-
-```cmd
-# Run deployment script
-scripts\deploy.bat
-
-# Deploy with options
-scripts\deploy.bat -e production -f
-
-# Dry run
-scripts\deploy.bat --dry-run
-```
-
-### Manual Production Deployment
-
-1. **Prepare Environment**
-   ```bash
-   # Ensure production environment file exists
-   cp backend/.env.production.example backend/.env.production
-   
-   # Configure production settings
-   nano backend/.env.production
-   ```
-
-2. **Build Production Images**
-   ```bash
-   # Build production images
-   docker-compose -f docker-compose.prod.yml build --no-cache
-   ```
-
-3. **Deploy Services**
-   ```bash
-   # Stop any existing services
-   docker-compose -f docker-compose.prod.yml down
-   
-   # Start production services
-   docker-compose -f docker-compose.prod.yml up -d
-   
-   # Verify deployment
-   docker-compose -f docker-compose.prod.yml ps
-   ```
-
-4. **Verify Production Deployment**
-   ```bash
-   # Check health endpoints
-   curl http://localhost:3000/health
-   curl http://localhost/health
-   
-   # View logs
-   docker-compose -f docker-compose.prod.yml logs
-   
-   # Monitor resource usage
-   docker stats
-   ```
-
-## Docker Configuration
-
-### Development Configuration (`docker-compose.yml`)
-
-- **Hot Reload**: Code changes are automatically reflected
-- **Debug Mode**: Detailed logging and debugging enabled
-- **Volume Mounts**: Source code mounted for live editing
-- **Port Mapping**: Direct port access for development
-
-### Production Configuration (`docker-compose.prod.yml`)
-
-- **Optimized Images**: Multi-stage builds for smaller images
-- **Security**: Non-root users, security headers
-- **Performance**: Production-optimized settings
-- **Monitoring**: Health checks and resource limits
-- **Persistence**: Named volumes for data persistence
-
-### Service Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│     Nginx       │    │    Frontend     │    │    Backend      │
-│  (Reverse Proxy)│◄──►│   (React App)   │◄──►│  (Node.js API)  │
-│     Port 443    │    │     Port 80     │    │    Port 3000    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│      Redis      │    │   File Storage  │    │   Log Storage   │
-│   (Caching)     │    │   (Volumes)     │    │   (Volumes)     │
-│    Port 6379    │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+**Use when:** Docker builds are consistently failing
 
 ## Environment Variables
 
-### Backend Environment Variables
+### Required Variables
 
-#### Required Variables
+Set these in Railway's environment variables section:
 
 ```bash
-# API Keys (REQUIRED)
-DYXLESS_API_KEY=your_dyxless_api_key_here
-ITP_API_KEY=your_itp_api_key_here
-LEAK_OSINT_API_KEY=your_leak_osint_api_key_here
-USERBOX_API_KEY=your_userbox_api_key_here
-VEKTOR_API_KEY=your_vektor_api_key_here
-
-# Application Settings
 NODE_ENV=production
 PORT=3000
-FRONTEND_URL=https://yourdomain.com
-```
 
-#### Optional Variables
-
-```bash
-# Monitoring
-MONITORING_ENABLED=true
-METRICS_INTERVAL=60000
-ALERTS_ENABLED=true
-
-# Performance Thresholds
-CPU_WARNING_THRESHOLD=70
-CPU_CRITICAL_THRESHOLD=90
-MEMORY_WARNING_THRESHOLD=80
-MEMORY_CRITICAL_THRESHOLD=95
+# API Keys
+DYXLESS_API_KEY=your_dyxless_api_key
+ITP_API_KEY=your_itp_api_key
+LEAK_OSINT_API_KEY=your_leak_osint_api_key
+USERBOX_API_KEY=your_userbox_api_key
+VEKTOR_API_KEY=your_vektor_api_key
 
 # Security
-ENABLE_CORS=true
-CORS_ORIGIN=https://yourdomain.com
+ENCRYPTION_KEY=your_32_character_encryption_key
+JWT_SECRET=your_jwt_secret_key
+CORS_ORIGIN=https://your-frontend-domain.com
+```
+
+### Optional Variables
+
+```bash
+# Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
-```
 
-### Frontend Environment Variables
+# Logging
+LOG_LEVEL=info
+LOG_FILE_PATH=/app/logs/application.log
 
-```bash
-# API Configuration
-REACT_APP_API_URL=http://localhost:3000
-REACT_APP_ENVIRONMENT=production
-
-# Build Configuration
-GENERATE_SOURCEMAP=false
-```
-
-## Monitoring and Health Checks
-
-### Health Check Endpoints
-
-- **Backend Health**: `http://localhost:3000/health`
-- **Frontend Health**: `http://localhost/health`
-- **Monitoring Dashboard**: `http://localhost:3000/api/monitoring/dashboard`
-
-### Monitoring Features
-
-1. **System Metrics**
-   - CPU usage and load average
-   - Memory consumption
-   - Process information
-
-2. **Application Metrics**
-   - Request counts and response times
-   - Search statistics
-   - Error rates and types
-
-3. **Alerts**
-   - Automatic threshold monitoring
-   - Configurable alert levels
-   - Alert resolution tracking
-
-### Log Management
-
-```bash
-# View application logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
-
-# View specific service logs
-docker logs privacy-backend-prod
-
-# Log rotation (production)
-# Logs are automatically rotated based on size and age
+# Monitoring
+HEALTH_CHECK_TIMEOUT=5000
+MONITORING_ENABLED=true
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### 1. Docker Issues
+#### 1. npm ci fails with package-lock.json not found
+
+**Solution:** Switch to simple Docker strategy
+```bash
+./scripts/deploy.sh simple
+```
+
+#### 2. Build fails with exit code 137 (memory issues)
+
+**Solution:** The Docker strategy includes memory optimizations. If still failing, try buildpack:
+```bash
+./scripts/deploy.sh buildpack
+```
+
+#### 3. TypeScript compilation errors
+
+**Solution:** Ensure all TypeScript errors are fixed locally first:
+```bash
+cd backend
+npm run build
+```
+
+#### 4. Health check failures
+
+**Symptoms:** Application builds but health checks fail
+**Solution:** 
+1. Check that the application starts on the correct port (3000)
+2. Verify the `/health` endpoint exists
+3. Check application logs in Railway dashboard
+
+### Build Testing Locally
+
+Test different strategies locally before deploying:
 
 ```bash
-# Docker daemon not running
-sudo systemctl start docker
+# Test all Docker strategies
+./scripts/build.sh
 
-# Permission denied
-sudo usermod -aG docker $USER
-# Log out and log back in
-
-# Out of disk space
-docker system prune -a
+# Test specific strategy
+docker build -f backend/Dockerfile.fixed -t datatrace-test .
+docker run -p 3000:3000 datatrace-test
 ```
 
-#### 2. Port Conflicts
+### Deployment Monitoring
 
-```bash
-# Check what's using a port
-sudo netstat -tulpn | grep :3000
+Monitor deployments using:
 
-# Kill process using port
-sudo kill -9 $(sudo lsof -t -i:3000)
+1. **Railway Dashboard:** https://railway.app
+2. **Build Logs:** Available in Railway's deployment section
+3. **Application Logs:** Check Railway's application logs
+4. **Health Endpoint:** `https://your-app.railway.app/health`
+
+## Alternative Platforms
+
+### Vercel (Frontend + Serverless Functions)
+
+For frontend deployment with serverless API:
+
+```json
+{
+  "builds": [
+    { "src": "frontend/package.json", "use": "@vercel/static-build" },
+    { "src": "backend/src/index.ts", "use": "@vercel/node" }
+  ]
+}
 ```
 
-#### 3. Environment Variable Issues
+### Heroku
 
-```bash
-# Check if environment file exists
-ls -la backend/.env*
+For Heroku deployment:
 
-# Verify environment variables are loaded
-docker-compose config
+```json
+{
+  "engines": {
+    "node": "18.x",
+    "npm": "8.x"
+  },
+  "scripts": {
+    "heroku-postbuild": "npm run build"
+  }
+}
 ```
 
-#### 4. API Connection Issues
+### DigitalOcean App Platform
 
-```bash
-# Test API connectivity
-curl -v http://localhost:3000/health
+Use the buildpack strategy configuration with DigitalOcean's Node.js buildpack.
 
-# Check container networking
-docker network ls
-docker network inspect privacy-network
-```
+## Performance Optimization
 
-#### 5. Memory Issues
+### Build Performance
 
-```bash
-# Check container resource usage
-docker stats
+- **Docker Layer Caching:** Enabled automatically on Railway
+- **npm Cache:** Configured in Dockerfiles
+- **Memory Limits:** Set to 1GB for build, 512MB for runtime
+- **Parallel Builds:** Multi-stage Docker builds
 
-# Increase Docker memory limit
-# Docker Desktop: Settings > Resources > Memory
-```
+### Runtime Performance
 
-### Debug Mode
+- **Health Checks:** Configured with 5-minute timeout
+- **Restart Policy:** Automatic restart on failure
+- **Resource Limits:** Optimized for Railway's infrastructure
 
-```bash
-# Enable debug logging
-export LOG_LEVEL=debug
+## Security Considerations
 
-# Run with debug output
-docker-compose up --build
+### Production Security
 
-# Access container shell
-docker exec -it privacy-backend-prod /bin/sh
-```
+- ✅ Non-root user in Docker containers
+- ✅ Environment variable encryption
+- ✅ CORS configuration
+- ✅ Rate limiting enabled
+- ✅ Input validation middleware
 
-### Performance Optimization
+### API Security
 
-1. **Resource Limits**
-   ```yaml
-   # In docker-compose.prod.yml
-   deploy:
-     resources:
-       limits:
-         cpus: '1.0'
-         memory: 1G
-   ```
+- ✅ API key validation
+- ✅ Request sanitization
+- ✅ Error message sanitization
+- ✅ Security headers (Helmet.js)
 
-2. **Image Optimization**
-   ```bash
-   # Use multi-stage builds
-   # Minimize layer count
-   # Use .dockerignore files
-   ```
+## Monitoring and Alerting
 
-3. **Caching**
-   ```bash
-   # Enable Redis caching
-   # Configure nginx caching
-   # Use Docker build cache
-   ```
+### Health Monitoring
 
-## Maintenance
+- **Endpoint:** `/health`
+- **Timeout:** 300 seconds
+- **Retry Policy:** 10 retries on failure
 
-### Regular Maintenance Tasks
+### Application Monitoring
 
-#### 1. Update Dependencies
-
-```bash
-# Update Docker images
-docker-compose pull
-
-# Rebuild with latest base images
-docker-compose build --no-cache
-```
-
-#### 2. Backup Data
-
-```bash
-# Create backup
-./scripts/deploy.sh --skip-tests --skip-backup=false
-
-# Manual backup
-docker-compose exec backend tar czf - /app/logs > backup_$(date +%Y%m%d).tar.gz
-```
-
-#### 3. Clean Up Resources
-
-```bash
-# Remove unused Docker resources
-docker system prune -a
-
-# Remove old backups
-find ./backups -name "backup_*" -mtime +30 -delete
-```
-
-#### 4. Monitor Performance
-
-```bash
-# Check resource usage
-docker stats
-
-# Review logs for errors
-docker-compose logs --tail=100 | grep ERROR
-
-# Monitor disk usage
-df -h
-```
-
-### Security Updates
-
-1. **Regular Updates**
-   ```bash
-   # Update base images monthly
-   docker pull node:18-alpine
-   docker pull nginx:alpine
-   
-   # Rebuild with updated images
-   docker-compose build --no-cache
-   ```
-
-2. **Security Scanning**
-   ```bash
-   # Scan images for vulnerabilities
-   docker scan privacy-backend:latest
-   docker scan privacy-frontend:latest
-   ```
-
-3. **SSL/TLS Configuration**
-   ```bash
-   # Update SSL certificates
-   # Configure HTTPS in nginx
-   # Enable HSTS headers
-   ```
-
-### Scaling
-
-#### Horizontal Scaling
-
-```yaml
-# In docker-compose.prod.yml
-services:
-  backend:
-    deploy:
-      replicas: 3
-    
-  frontend:
-    deploy:
-      replicas: 2
-```
-
-#### Load Balancing
-
-```bash
-# Use nginx for load balancing
-# Configure upstream servers
-# Enable session affinity if needed
-```
+- **Logging:** Winston with structured logging
+- **Error Tracking:** Comprehensive error middleware
+- **Performance Metrics:** Response time tracking
 
 ## Support
 
-For additional support:
+### Getting Help
 
-1. Check the [troubleshooting section](#troubleshooting)
-2. Review application logs
-3. Consult the monitoring dashboard
-4. Contact the development team
+1. **Check Logs:** Railway dashboard → Deployments → Logs
+2. **Test Locally:** Use `./scripts/build.sh` to test builds
+3. **Switch Strategy:** Use deployment scripts to try different approaches
+4. **Health Check:** Verify `/health` endpoint responds correctly
 
----
+### Emergency Procedures
 
-**Note**: This deployment guide assumes you have the necessary API keys and permissions to access the external services used by the application. Make sure to configure all environment variables properly before deployment.
+#### Rollback Deployment
+
+1. Go to Railway dashboard
+2. Navigate to Deployments
+3. Click "Redeploy" on a previous successful deployment
+
+#### Switch Deployment Strategy
+
+```bash
+# Quick switch to buildpack if Docker fails
+./scripts/deploy.sh buildpack
+git add railway.toml
+git commit -m "Emergency switch to buildpack deployment"
+git push origin main
+```
+
+This deployment guide ensures reliable and optimized deployment of the DataTrace application across multiple platforms and strategies.

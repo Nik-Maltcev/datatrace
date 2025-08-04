@@ -15,6 +15,10 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix"
   },
+  "engines": {
+    "node": "18.x",
+    "npm": ">=8.0.0"
+  },
   "keywords": ["privacy", "data-removal", "telegram-bots", "api"],
   "author": "",
   "license": "MIT",
