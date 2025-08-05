@@ -63,20 +63,20 @@ app.use(express.urlencoded({
 }));
 
 // Apply emergency lockdown check first
-app.use(emergencyLockdownMiddleware);
+// app.use(emergencyLockdownMiddleware); // TEMPORARILY DISABLED
 
 // Apply comprehensive security middleware
-app.use(securityMiddleware({
-  enablePIISanitization: true,
-  enableMemoryCleanup: true,
-  enableDataEncryption: true,
-  enableAdvancedRateLimit: true,
-  enableThreatDetection: true,
-  enableSecurityHeaders: true
-}));
+// app.use(securityMiddleware({  // TEMPORARILY DISABLED
+//   enablePIISanitization: true,
+//   enableMemoryCleanup: true,
+//   enableDataEncryption: true,
+//   enableAdvancedRateLimit: true,
+//   enableThreatDetection: true,
+//   enableSecurityHeaders: true
+// }));
 
 // Apply security monitoring
-app.use(securityMonitoringMiddleware);
+// app.use(securityMonitoringMiddleware); // TEMPORARILY DISABLED
 
 // Apply monitoring middleware
 app.use(requestMetricsMiddleware);
