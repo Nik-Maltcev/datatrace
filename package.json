@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "docker-compose up -d",
-    "build": "npm run build:backend && npm run build:frontend",
+    "build": "cd backend && npm install && npm run build",
+    "start": "cd backend && npm start",
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
-    "start": "docker-compose -f docker-compose.prod.yml up -d",
+    "start:docker": "docker-compose -f docker-compose.prod.yml up -d",
     "stop": "docker-compose down",
     "test": "./scripts/test-all.sh",
     "test:backend": "cd backend && npm test",
