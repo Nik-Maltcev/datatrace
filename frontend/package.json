@@ -20,8 +20,8 @@
     "serve": "^14.2.1"
   },
   "engines": {
-    "node": "18.x",
-    "npm": "8.x"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "scripts": {
     "start": "serve -s build -l 3000",
